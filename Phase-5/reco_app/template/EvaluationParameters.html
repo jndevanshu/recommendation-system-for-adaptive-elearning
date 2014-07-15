@@ -1,0 +1,294 @@
+{% extends "base_staff.html"%}
+{% block body %}
+        
+        <h1><font color="gold">Lets calculate the parameters :</font></h1>
+        <br>
+        <div class="table-responsive">
+            <table style="width: 100%;" class="table">
+                <tr>
+                    <th><center>Precision</center></th>
+                    <th><center>Recall</center></th>
+                    <th><center>F1 Metric</center></th>
+                </tr>
+                <tr>
+                    <td><center><div id="container-speed" style="min-width: 400px; height: 280px;"></div></center></td>
+                    <td><center><div id="container-rpm" style="min-width: 400px; height: 280px;"></div></center></td>
+                    <td><center><div id="container-f1-metric" style="min-width: 400px; height: 280px;"></div></center></td>
+                </tr>
+                <tr>
+                    <td>
+                        <p>Number of good recommendations displayed : {{ good_recommendation_displayed_count }}</p>
+                        <p>Number of recommendations displayed : {{ num_recomendations_displayed }}</p>
+                        <br>
+                        <p>Therefore, the precision is <label id="pre"></label></p>
+                    </td>
+                    <td>
+                        <p>Number of good recommendations displayed : {{ good_recommendation_displayed_count }}</p>
+                        <p>Total number of good recommendations : {{ good_recommendation_displayed_count }}</p>
+                        <br>
+                        <p>Therefore, the recall is <span style="display:inline;" id="rec"></span></p>
+                    </td>
+                    <td>
+                        <p>F1 metric = 2 * ( recall * precision ) / ( recall + precision ) = <label style="display:inline;" id="f1m"></label></p>
+                    </td>
+                </tr>
+                
+            </table>
+        </div>
+        <h1><font color="gold">Average Ratings :</font></h1>
+        <br>
+
+        <center>
+            <div class="table-responsive">
+                <table class="table table-mat-eval" style="width:60%">
+                    <tr>
+                        <th>Concept ID</th>
+                        <th>Concept name</th>		
+                        <th>Average Rating</th>
+                    </tr>	
+                    {% for con in concept_rating_array %}
+                    {% if con.2 <= 1 %}
+                    <tr class="danger">
+                    {% elif con.2 <= 4%}
+                    <tr class="warning">
+                    {% else %}
+                    <tr class="success">
+                    {% endif %}
+                        <td>{{ con.0 }}</td>		
+                        <td>{{ con.1 }}</td>        
+                        <td>{{ con.2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </center>
+            
+    <script type="text/javascript">
+        var precision;
+        var recall;
+        var f1_metric;
+
+        function cal_precision(a,b)
+        {
+            return a/b;
+        }
+
+        function cal_f1_metric(p,r)
+        {
+           var temp1 = ( 2 * p * r ) / ( p + r);
+           var temp2 = Math.round(temp1*100);
+           var temp3 = temp2/100;
+           return temp3;
+
+        }
+
+        $(document).ready(function() {
+            precision = cal_precision({{ good_recommendation_displayed_count }}, {{ num_recomendations_displayed }});
+            document.getElementById("pre").innerHTML = precision; 
+             recall = cal_precision({{ good_recommendation_displayed_count }}, {{ good_recommendation_displayed_count }});
+            document.getElementById("rec").innerHTML = recall; 
+            f1_metric = cal_f1_metric(precision,recall);
+            document.getElementById("f1m").innerHTML = f1_metric; 
+        });
+
+
+        $(function () {
+
+            var gaugeOptions = {
+
+                    chart: {
+                        type: 'solidgauge',
+                        backgroundColor: (Highcharts.theme && Highcharts.theme.background2) || '#50cc69'
+                    },
+
+                    title: null,
+
+                    pane: {
+                        center: ['50%', '85%'],
+                        size: '150%',
+                        startAngle: -90,
+                        endAngle: 90,
+                        background: {
+                            backgroundColor: (Highcharts.theme && Highcharts.theme.background2) || '#EEE',
+                            innerRadius: '60%',
+                            outerRadius: '100%',
+                            shape: 'arc'
+                        }
+                    },
+                    tooltip: {
+                        enabled: false
+                    },
+                    yAxis: {
+                        stops: [
+                            [0.25, '#DF5353'], // red
+                            [0.6, '#DDDF0D'], // yellow
+                            [0.75, '#55BF3B'] // green
+                        ],
+                        lineWidth: 0,
+                        minorTickInterval: null,
+                        tickPixelInterval: 400,
+                        tickWidth: 0,
+                        title: {
+                            y: -70
+                        },
+                        labels: {
+                            y: 16
+                        }        
+                    },
+                    plotOptions: {
+                        solidgauge: {
+                            dataLabels: {
+                                y: 5,
+                                borderWidth: 0,
+                                useHTML: true
+                            }
+                        }
+                    }
+            };
+
+            // The speed gauge
+            $('#container-speed').highcharts(Highcharts.merge(gaugeOptions, {
+                yAxis: {
+                        min: 0,
+                        max: 1,
+                        title: {
+                            text: 'Precision',
+                            style: {
+                                color: 'blue'
+                            }
+                        }       
+                    },
+
+                    credits: {
+                        enabled: false
+                    },
+
+                    series: [{
+                        name: 'Precision',
+                        data: [precision],
+                        dataLabels: {
+                                format: '<div style="text-align:center"><span style="font-size:25px;color:' + 
+                            ((Highcharts.theme && Highcharts.theme.contrastTextColor) || 'blue') + '">{y}</span><br/>' + 
+                                '<span style="font-size:12px;color:gold;"></span></div>'
+                        },
+                        tooltip: {
+                            valueSuffix: ' '
+                        }
+                    }]
+
+                }));
+
+            // The RPM gauge
+            $('#container-rpm').highcharts(Highcharts.merge(gaugeOptions, {
+                yAxis: {
+                        min: 0,
+                        max: 1,
+                        title: {
+                            text: 'Recall'
+                        }       
+                    },
+
+                    series: [{
+                        name: 'Recall',
+                        data: [recall],
+                        dataLabels: {
+                                format: '<div style="text-align:center"><span style="font-size:25px;color:' + 
+                            ((Highcharts.theme && Highcharts.theme.contrastTextColor) || 'blue') + '">{y:.1f}</span><br/>' + 
+                                '<span style="font-size:12px;color:silver"></span></div>'
+                        },
+                        tooltip: {
+                            valueSuffix: ''
+                        }      
+                    }]
+
+                }));
+             // The f1 metric gauge
+            $('#container-f1-metric').highcharts(Highcharts.merge(gaugeOptions, {
+                yAxis: {
+                        min: 0,
+                        max: 1,
+                        title: {
+                            text: 'f1 metric'
+                        }       
+                    },
+
+                    credits: {
+                        enabled: false
+                    },
+
+                    series: [{
+                        name: 'fi metric',
+                        data: [f1_metric],
+                        dataLabels: {
+                                format: '<div style="text-align:center"><span style="font-size:25px;color:' + 
+                            ((Highcharts.theme && Highcharts.theme.contrastTextColor) || 'blue') + '">{y}</span><br/>' + 
+                                '<span style="font-size:12px;color:silver"></span></div>'
+                        },
+                        tooltip: {
+                            valueSuffix: ' '
+                        }
+                    }]
+
+                }));
+
+
+            // Bring life to the dials
+            setInterval(function () {
+                // Speed
+                var chart = $('#container-speed').highcharts();
+                if (chart) {
+                    var point = chart.series[0].points[0],
+                        newVal,
+                        inc = Math.round((Math.random() - 0.5) * 100);
+
+                    newVal = point.y + inc;
+                    if (newVal < 0 || newVal > 200) {
+                        newVal = point.y - inc;
+                    }
+
+                    //point.update(newVal);
+                }
+
+                // RPM
+                chart = $('#container-rpm').highcharts();
+                if (chart) {
+                    var point = chart.series[0].points[0],
+                        newVal,
+                        inc = Math.random() - 0.5;
+
+                    newVal = point.y + inc;
+                    if (newVal < 0 || newVal > 5) {
+                        newVal = point.y - inc;
+                    }
+
+                    //point.update(newVal);
+                }
+            }, 2000);  	
+        });
+    </script>
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
