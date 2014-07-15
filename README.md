@@ -13,7 +13,7 @@ start an application :
 2. Run the celery server first (so that work can be performed using worker nodes)
 using the following command :
 
-	celery −A elearningsite worker −l info
+	celery −A elearning_site worker −l info
 
 The terminal will show message on successful deployment of celery worker node.
 All the messages related to the backend tasks running on celery can be viewed
